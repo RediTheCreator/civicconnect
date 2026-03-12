@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <script src="api.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ndërlidhësi - Institucioni</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; color: #333; }
+
+        header {
+            background: #1a56db;
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 { font-size: 22px; }
+        .user-info { font-size: 14px; opacity: 0.9; }
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-left: 16px;
+        }
+        .logout-btn:hover { background: rgba(255,255,255,0.3); }
+
+        .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+
+        .page-title { font-size: 22px; color: #1a56db; margin-bottom: 24px; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        .stat-card .number { font-size: 32px; font-weight: 700; color: #1a56db; }
+        .stat-card .label { font-size: 12px; color: #666; margin-top: 4px; }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .filters select {
+            padding: 9px 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            margin-bottom: 16px;
+        }
+
+        .complaint-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        .complaint-header h4 { font-size: 15px; }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge.pending { background: #fef3c7; color: #92400e; }
+        .badge.answered { background: #ecfdf5; color: #065f46; }
+        .badge.overdue { background: #fef2f2; color: #991b1b; }
+
+        .complaint-meta { font-size: 13px; color: #666; margin-bottom: 10px; }
+
+        .sla-bar-container {
+            margin-bottom: 14px;
+        }
+        .sla-bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        .sla-bar {
+            background: #e5e7eb;
+            border-radius: 20px;
+            height: 6px;
+            overflow: hidden;
+        }
+        .sla-fill {
+            height: 100%;
+            border-radius: 20px;
+            transition: width 0.4s;
+        }
+        .sla-fill.green { background: #0e9f6e; }
+        .sla-fill.yellow { background: #f59e0b; }
+        .sla-fill.red { background: #ef4444; }
+
+        .complaint-message {
+            background: #f9fafb;
+            border-left: 3px solid #1a56db;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .response-area textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            height: 80px;
+            resize: vertical;
+            font-family: inherit;
+            margin-bottom: 10px;
+        }
+        .response-area textarea:focus { outline: none; border-color: #1a56db; }
+
+        .btn {
+            background: #1a56db;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .btn:hover { background: #1648c0; }
+
+        .responded-box {
+            background: #ecfdf5;
+            border: 1px solid #0e9f6e;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            color: #065f46;
+        }
+
+        .empty { text-align: center; color: #999; padding: 40px; font-size: 15px; }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-size: 13px;
+        }
+
+        .nav-btn {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.25); }
+        .nav-btn.active { background: rgba(255,255,255,0.35); }
+    </style>
+</head>
+<body>
+
+<header>
+    <div style="display:flex; align-items:center; gap:12px;">
+    <svg width="36" height="36" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="64" height="64" rx="16" fill="rgba(255,255,255,0.2)"/>
+        <rect x="14" y="28" width="6" height="18" rx="1" fill="white"/>
+        <rect x="23" y="22" width="6" height="24" rx="1" fill="white" opacity="0.9"/>
+        <rect x="35" y="22" width="6" height="24" rx="1" fill="white" opacity="0.9"/>
+        <rect x="44" y="28" width="6" height="18" rx="1" fill="white"/>
+        <rect x="11" y="46" width="42" height="4" rx="2" fill="white"/>
+        <polygon points="32,12 10,28 54,28" fill="white" opacity="0.95"/>
+        <circle cx="32" cy="11" r="3" fill="white"/>
+    </svg>
+    <h1>Ndërlidhësi</h1>
+</div>
+    <div style="display:flex; align-items:center; gap:16px;">
+        <nav style="display:flex; gap:8px;">
+            <button class="nav-btn active" id="nav-complaints" onclick="showSection('complaints')">📋 Ankesat</button>
+            <button class="nav-btn" id="nav-ranking" onclick="showSection('ranking')">🏆 Renditja</button>
+             <button class="nav-btn" onclick="window.location.href='dashboard.html'">📊 Dashboard</button>
+        </nav>
+        <span class="user-info" id="headerUser"></span>
+        <button class="logout-btn" onclick="logout()">Dil</button>
+    </div>
+</header>
+
+<div class="container">
+    <h2 class="page-title">Paneli i Institucionit</h2>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="number" id="totalCount">0</div>
+            <div class="label">Ankesa Totale</div>
+        </div>
+        <div class="stat-card">
+            <div class="number" id="pendingCount">0</div>
+            <div class="label">Në Pritje</div>
+        </div>
+        <div class="stat-card">
+            <div class="number" id="overdueCount">0</div>
+            <div class="label" style="color:#ef4444;">Të Kaluara SLA</div>
+        </div>
+        <div class="stat-card">
+            <div class="number" id="avgScore">—</div>
+            <div class="label">Score Mesatar</div>
+        </div>
+    </div>
+
+   <div id="section-complaints">
+    <div class="filters">
+        <select id="statusFilter" onchange="loadComplaints()">
+            <option value="all">Të gjitha</option>
+            <option value="pending">Në pritje</option>
+            <option value="answered">Të përgjigura</option>
+        </select>
+        <select id="categoryFilter" onchange="loadComplaints()">
+            <option value="all">Të gjitha kategoritë</option>
+        </select>
+    </div>
+    <div id="complaintsList"></div>
+</div>
+
+    <div id="section-complaints">
+        <div id="complaintsList"></div>
+    </div>
+
+    <div id="section-ranking" style="display:none;">
+        <div class="card">
+            <h3> Pozicioni Juaj në Renditje</h3>
+            <div id="institutionRanking"></div>
+        </div>
+    </div>
+
+</div>
+
+<footer>Ndërlidhësi © 2025 — Transparencë dhe Llogaridhënie</footer>
+<script>
+    const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    if (!user || user.role !== 'institution') {
+        window.location.href = 'login.html';
+    } else {
+        document.getElementById('headerUser').textContent =  user.name;
+    }
+
+    function logout() {
+        localStorage.removeItem('currentUser');
+        window.location.href = 'login.html';
+    }
+
+    function calculateSLAStatus(complaint) {
+    const elapsed = Date.now() - new Date(complaint.timestamp).getTime();
+    const slaMs = complaint.slaHours * 3600000;
+    const percent = Math.min((elapsed / slaMs) * 100, 100);
+
+    if (complaint.status === 'answered') {
+        const withinSLA = complaint.responseTime <= slaMs;
+        return { percent: 100, color: withinSLA ? 'green' : 'red', overdue: false, label: withinSLA ? 'U përgjigj brenda SLA' : 'U përgjigj pas SLA' };
+    }
+
+    const overdue = elapsed > slaMs;
+    const color = percent < 60 ? 'green' : percent < 90 ? 'yellow' : 'red';
+    const hoursLeft = Math.max(0, Math.round((slaMs - elapsed) / 3600000));
+    const label = overdue ? '⚠️ Kaluar afati!' : `${hoursLeft}h të mbetura`;
+
+    return { percent, color, overdue, label };
+}
+
+    function calculateComplaintScore(complaint) {
+    if (complaint.status !== 'answered') return null;
+    const slaMs = complaint.slaHours * 3600000;
+    const ratio = complaint.responseTime / slaMs;
+
+    let timeScore;
+    if (ratio <= 0.5) timeScore = 100;
+    else if (ratio <= 1) timeScore = 75;
+    else if (ratio <= 1.5) timeScore = 50;
+    else timeScore = 25;
+
+    let feedbackBonus = 0;
+    if (complaint.feedback === 'satisfied') feedbackBonus = 2;
+    else if (complaint.feedback === 'neutral') feedbackBonus = 0;
+    else if (complaint.feedback === 'dissatisfied') feedbackBonus = -2;
+
+    return Math.min(100, Math.max(0, timeScore + feedbackBonus));
+}
+
+    async function loadInstitutionRanking() {
+    const complaints = await getComplaints();
+    const institutions = [
+        'Bashkia Tiranë',
+        'Ministria e Financave',
+        'Ministria e Arsimit',
+        'Ministria e Shëndetësisë',
+        'ARRSH'
+    ];
+
+    const ranked = institutions.map(inst => {
+        const answered = complaints.filter(c => c.institution === inst && c.status === 'answered');
+        const total = complaints.filter(c => c.institution === inst).length;
+        if (answered.length === 0) return { inst, score: null, total };
+        const scores = answered.map(c => calculateComplaintScore(c));
+        const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+        return { inst, score: avg, total };
+    });
+
+    ranked.sort((a, b) => {
+        if (a.score === null && b.score === null) return 0;
+        if (a.score === null) return 1;
+        if (b.score === null) return -1;
+        return b.score - a.score;
+    });
+
+    const myPosition = ranked.findIndex(r => r.inst === user.name) + 1;
+    const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+    const myData = ranked.find(r => r.inst === user.name);
+    const score = myData?.score;
+
+    let badgeClass;
+    if (score === null || score === undefined) badgeClass = 'score-n';
+    else if (score >= 80) badgeClass = 'score-a';
+    else if (score >= 60) badgeClass = 'score-b';
+    else if (score >= 40) badgeClass = 'score-c';
+    else badgeClass = 'score-d';
+
+    const container = document.getElementById('institutionRanking');
+    container.innerHTML = `
+        <div style="background:#eff6ff; border:2px solid #1a56db; border-radius:10px; padding:16px; margin-bottom:20px; display:flex; align-items:center; gap:16px;">
+            <div style="font-size:36px;">${medals[myPosition - 1]}</div>
+            <div style="flex:1;">
+                <div style="font-size:16px; font-weight:700; color:#1a56db;">Pozicioni juaj: #${myPosition} nga ${institutions.length}</div>
+                <div style="font-size:13px; color:#555; margin-top:2px;">${user.name}</div>
+            </div>
+            <div class="${badgeClass}" style="font-size:20px; font-weight:700; padding:8px 16px; border-radius:20px;">
+                ${score !== null && score !== undefined ? score + '/100' : 'N/A'}
+            </div>
+        </div>
+        ${ranked.map((item, index) => {
+            const isMe = item.inst === user.name;
+            const s = item.score;
+            const progressColor = s >= 80 ? '#0e9f6e' : s >= 60 ? '#1a56db' : s >= 40 ? '#f59e0b' : '#ef4444';
+            return `
+                <div style="display:flex; align-items:center; gap:14px; padding:12px; border-bottom:1px solid #f3f4f6; ${isMe ? 'background:#fffbeb; border-radius:8px;' : ''}">
+                    <div style="font-size:20px; width:30px; text-align:center;">${medals[index]}</div>
+                    <div style="flex:1;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <span style="font-size:14px; font-weight:${isMe ? '700' : '600'}; color:${isMe ? '#1a56db' : '#333'};">
+                                ${item.inst} ${isMe ? '👈 Ju' : ''}
+                            </span>
+                            <span style="font-size:12px; color:#666;">${item.total} ankesa</span>
+                        </div>
+                        <div style="background:#e5e7eb; border-radius:20px; height:6px; overflow:hidden;">
+                            <div style="width:${s || 0}%; height:100%; border-radius:20px; background:${progressColor};"></div>
+                        </div>
+                    </div>
+                    <div style="font-size:13px; font-weight:700;">${s !== null && s !== undefined ? s + '/100' : 'N/A'}</div>
+                </div>
+            `;
+        }).join('')}
+    `;
+}
+
+    async function loadComplaints() {
+    const complaints = await getComplaints();
+    const instComplaints = complaints.filter(c => c.institution === user.name);
+
+    const statusFilter = document.getElementById('statusFilter').value;
+    const categoryFilter = document.getElementById('categoryFilter').value;
+
+    const categories = [...new Set(instComplaints.map(c => c.category))];
+    const catSelect = document.getElementById('categoryFilter');
+    const currentCat = catSelect.value;
+    catSelect.innerHTML = '<option value="all">Të gjitha kategoritë</option>';
+    categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        catSelect.appendChild(opt);
+    });
+    catSelect.value = currentCat;
+
+    const pending = instComplaints.filter(c => c.status === 'pending');
+    const overdue = pending.filter(c => {
+        const elapsed = Date.now() - new Date(c.timestamp).getTime();
+        return elapsed > c.slaHours * 3600000;
+    });
+
+    document.getElementById('totalCount').textContent = instComplaints.length;
+    document.getElementById('pendingCount').textContent = pending.length;
+    document.getElementById('overdueCount').textContent = overdue.length;
+
+    const answered = instComplaints.filter(c => c.status === 'answered');
+    if (answered.length > 0) {
+        const scores = answered.map(c => calculateComplaintScore(c));
+        const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+        document.getElementById('avgScore').textContent = avg + '/100';
+    }
+
+    let filtered = instComplaints;
+    if (statusFilter !== 'all') filtered = filtered.filter(c => c.status === statusFilter);
+    if (categoryFilter !== 'all') filtered = filtered.filter(c => c.category === categoryFilter);
+
+    document.getElementById('section-complaints').style.display = 'block';
+    document.getElementById('section-ranking').style.display = 'none';
+    document.getElementById('nav-complaints').classList.add('active');
+    document.getElementById('nav-ranking').classList.remove('active');
+
+    const container = document.getElementById('complaintsList');
+
+    if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty">Nuk ka ankesa për këto filtra.</div>';
+        return;
+    }
+
+    container.innerHTML = filtered.map(c => {
+        const sla = calculateSLAStatus(c);
+        const days = c.slaHours >= 24 ? Math.round(c.slaHours / 24) + ' ditë' : c.slaHours + ' orë';
+
+        return `
+            <div class="card">
+                <div class="complaint-header">
+                    <h4>${c.subject}</h4>
+                    <span class="badge ${c.status === 'dismissed' ? 'overdue' : sla.overdue ? 'overdue' : c.status === 'pending' ? 'pending' : 'answered'}">
+                        ${c.status === 'dismissed' ? '🚫 E pavlefshme' : sla.overdue ? '🔴 Kaluar afati' : c.status === 'pending' ? '⏳ Në pritje' : '✅ Përgjigjet'}
+                    </span>
+                </div>
+                <div class="complaint-meta">
+                    👤 ${c.name} &nbsp;|&nbsp; 📂 ${c.category} &nbsp;|&nbsp; 🆔 ${c.id} &nbsp;|&nbsp; 🕐 ${new Date(c.timestamp).toLocaleString('sq-AL')}
+                </div>
+                <div class="sla-bar-container">
+                    <div class="sla-bar-label">
+                        <span>⏱ SLA: ${days}</span>
+                        <span>${sla.label}</span>
+                    </div>
+                    <div class="sla-bar">
+                        <div class="sla-fill ${sla.color}" style="width: ${sla.percent}%"></div>
+                    </div>
+                </div>
+                <div class="complaint-message">${c.message}</div>
+                ${c.photo ? `
+                    <div style="margin-bottom:16px;">
+                        <p style="font-size:13px; font-weight:600; color:#555; margin-bottom:8px;">📷 Foto e bashkangjitur:</p>
+                        <img src="${c.photo}" style="max-width:100%; max-height:300px; border-radius:8px; object-fit:cover; border:1px solid #e5e7eb;">
+                    </div>
+                ` : ''}
+                ${c.status === 'pending' ? `
+                    <div class="response-area">
+                        <textarea id="resp-${c.id}" placeholder="Shkruaj përgjigjen këtu..."></textarea>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn" onclick="respond('${c.id}')">Dërgo Përgjigjen</button>
+                            <button class="btn" onclick="dismiss('${c.id}')" style="background:#ef4444;">🗑️ Ankesë e Pavlefshme</button>
+                        </div>
+                    </div>
+                ` : c.status === 'dismissed' ? `
+                    <div style="background:#fef2f2; border:1px solid #fca5a5; border-radius:8px; padding:12px; font-size:14px; color:#991b1b;">
+                        🚫 <strong>E klasifikuar si e pavlefshme</strong> — nuk ndikon në score
+                    </div>
+                ` : `
+                    <div class="responded-box">
+                        💬 <strong>Përgjigja juaj:</strong> ${c.response}
+                    </div>
+                `}
+            </div>
+        `;
+    }).join('');
+}
+   async function respond(id) {
+    const responseText = document.getElementById(`resp-${id}`).value.trim();
+    if (!responseText) { alert('Ju lutem shkruani një përgjigje!'); return; }
+
+    const complaints = await getComplaints();
+    const complaint = complaints.find(c => c.id === id);
+    const responseTime = Date.now() - new Date(complaint.timestamp).getTime();
+
+    await respondComplaint(id, responseText, responseTime);
+    loadComplaints();
+    loadInstitutionRanking();
+}
+
+async function dismiss(id) {
+    if (confirm('E klasifikon këtë ankesë si të pavlefshme?')) {
+        await dismissComplaint(id);
+        loadComplaints();
+    }
+}
+    function showSection(section) {
+    document.getElementById('section-complaints').style.display = section === 'complaints' ? 'block' : 'none';
+    document.getElementById('section-ranking').style.display = section === 'ranking' ? 'block' : 'none';
+    document.getElementById('nav-complaints').classList.toggle('active', section === 'complaints');
+    document.getElementById('nav-ranking').classList.toggle('active', section === 'ranking');
+    if (section === 'ranking') loadInstitutionRanking();
+    }
+    loadInstitutionRanking();
+    loadComplaints();
+</script>
+
+</body>
+</html>
