@@ -1,4 +1,4 @@
-const API = 'http://localhost:3000/api';
+const API = 'https://civicconnect-np49.onrender.com/api';
 
 async function getComplaints() {
     const res = await fetch(`${API}/complaints`);
